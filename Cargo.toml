@@ -1,6 +1,6 @@
 [package]
 name = "hj_thread_pool"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["HaojieZhang zhj630985214@gmail.com"]
 description = "A simple thread pool implementation in Rust."

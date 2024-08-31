@@ -1,12 +1,11 @@
 use std::{
-    sync::{
+    panic, sync::{
         mpsc::{Receiver, Sender},
         Arc, Mutex,
-    },
-    thread::{self, JoinHandle},
+    }, thread::{self, JoinHandle}
 };
 
-use tklog::{debugs, sync::Logger, LEVEL};
+use tklog::{debugs, sync::Logger, warns, LEVEL};
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
@@ -77,7 +76,27 @@ impl Worker {
                 break;
             }
             let job = recv_job_result.unwrap();
-            job();
+
+            let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+                job();
+            }));
+            
+            match result {
+                Ok(_) => {
+                }
+                Err(err) => {
+                    let panic_info = {
+                        if let Some(message) = err.downcast_ref::<String>() {
+                            message.clone()
+                        } else if let Some(message) = err.downcast_ref::<&str>() {
+                            message.to_string()
+                        } else {
+                            "Cause panic with unknown reason".to_string()
+                        }
+                    };
+                    warns!(&mut logger, format!("Worker {} got panic while executing job, but the panic is caught and the worker will continue to work, so don't worry. The panic info is: {}", worker_id, panic_info));
+                }
+            }
         });
         self.join_handle = Some(join_handle);
     }
@@ -176,6 +195,23 @@ mod tests {
         pool.execute(|| {
             for i in 0..10 {
                 println!("Task 3: {}", i);
+                thread::sleep(Duration::from_secs(1));
+            }
+        });
+    }
+
+    #[test]
+    fn test_job_panic() {
+        let pool = HjThreadPool::new(HjThreadPoolCfg {
+            num_workers: 1,
+            log_level: HjThreadPoolLogLevel::Debug,
+        });
+        pool.execute(|| {
+            panic!("Panic in job");
+        });
+        pool.execute(|| {
+            for i in 0..10 {
+                println!("Task 2: {}", i);
                 thread::sleep(Duration::from_secs(1));
             }
         });
