@@ -1,0 +1,16 @@
+[package]
+name = "hj_thread_pool"
+version = "0.1.0"
+edition = "2021"
+authors = ["HaojieZhang zhj630985214@gmail.com"]
+description = "A simple thread pool implementation in Rust."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/HaojieZhang6848/hj_thread_pool"
+keywords = ["thread-pool", "rust", "concurrency"]
+categories = ["concurrency"]
+readme = "README.md"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.9"
+tklog = "0.1.0"
